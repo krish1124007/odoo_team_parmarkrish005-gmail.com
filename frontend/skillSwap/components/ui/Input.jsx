@@ -1,12 +1,6 @@
 import React from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
-}
-
-const Input: React.FC<InputProps> = ({
+const Input = ({
   label,
   error,
   helperText,
