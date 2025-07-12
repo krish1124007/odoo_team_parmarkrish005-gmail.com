@@ -343,5 +343,5 @@ const updateSwapStatus = asyncHandler(async (req, res) => {
 
 
 
-export {registerUser,login , updateProfile , forgetPassword , verifyOtp , createSwapRequest}
+export {registerUser,login , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus}
 
