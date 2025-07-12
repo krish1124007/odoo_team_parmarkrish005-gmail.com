@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 import React from 'react';
 import { motion } from 'framer-motion';
 
@@ -45,4 +44,4 @@ const Button = ({
 };
 
 export default Button;
->>>>>>> 7101d2fc6b940406f7ebd433604b7626c790d591
+
