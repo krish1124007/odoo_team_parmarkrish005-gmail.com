@@ -4,265 +4,263 @@ import { ApiResponse } from "../../utils/apiResponse.js";
 import { sendMail } from "../../utils/sendMail.js";
 import { generateOTP } from "../../utils/generateOtp.js"
 import { Otp } from "../../models/otp.model.js";
-import {SwapRequest} from "../../models/swap.model.js"
+import { SwapRequest } from "../../models/swap.model.js"
 import mongoose from "mongoose";
 
 const registerUser = asyncHandler(async (req, res) => {
-    const {
-        email,
-        password,
-        username,
-        profile_photo,
-        skills_offered,
-        skills_wanted,
-        github_profile,
-        location,
-        availability,
-        publicProfile
-    } = req.body;
+  const {
+    email,
+    password,
+    username,
+    profile_photo,
+    skills_offered,
+    skills_wanted,
+    github_profile,
+    location,
+    availability,
+    publicProfile
+  } = req.body;
 
-    // Validate required fields
-    if (!email || !password || !skills_offered || !skills_wanted || !github_profile) {
-        return res.status(400).json(
-            new ApiResponse(400, "Required fields missing", {
-                success: false,
-                data: "MissingFieldsError"
-            })
-        );
-    }
-
-    // Check if user already exists
-    const isUserExist = await User.findOne({ email });
-    if (isUserExist) {
-        return res.status(400).json(
-            new ApiResponse(400, "User already exists", {
-                success: false,
-                data: "ObjectAlreadyExistError"
-            })
-        );
-    }
-
-    // Create new user
-    const createNewUser = await User.create({
-        email,
-        password,
-        username,
-        profile_photo,
-        skills_offered,
-        skills_wanted,
-        github_profile,
-        location,
-        availability,
-        publicProfile
-    });
-
-    if (!createNewUser) {
-        return res.status(500).json(
-            new ApiResponse(500, "User not created", {
-                success: false,
-                data: "ObjectNotCreateError"
-            })
-        );
-    }
-
-    // Generate JWT token from the newly created user
-    const accessToken = createNewUser.generateAccessToken();
-
-    if (!accessToken) {
-        return res.status(500).json(
-            new ApiResponse(500, "Access token not generated", {
-                success: false,
-                data: "TokenGenerationError"
-            })
-        );
-    }
-
-    return res.status(201).json(
-        new ApiResponse(201, "User registered successfully", {
-            success: true,
-            data: {
-                token: accessToken,
-                user: {
-                    _id: createNewUser._id,
-                    email: createNewUser.email,
-                    username: createNewUser.username,
-                    profile_photo: createNewUser.profile_photo,
-                    skills_offered: createNewUser.skills_offered,
-                    skills_wanted: createNewUser.skills_wanted,
-                    github_profile: createNewUser.github_profile,
-                    location: createNewUser.location,
-                    availability: createNewUser.availability,
-                    publicProfile: createNewUser.publicProfile
-                }
-            }
-        })
+  // Validate required fields
+  if (!email || !password || !skills_offered || !skills_wanted || !github_profile) {
+    return res.status(400).json(
+      new ApiResponse(400, "Required fields missing", {
+        success: false,
+        data: "MissingFieldsError"
+      })
     );
+  }
+
+  // Check if user already exists
+  const isUserExist = await User.findOne({ email });
+  if (isUserExist) {
+    return res.status(400).json(
+      new ApiResponse(400, "User already exists", {
+        success: false,
+        data: "ObjectAlreadyExistError"
+      })
+    );
+  }
+
+  // Create new user
+  const createNewUser = await User.create({
+    email,
+    password,
+    username,
+    profile_photo,
+    skills_offered,
+    skills_wanted,
+    github_profile,
+    location,
+    availability,
+    publicProfile
+  });
+
+  if (!createNewUser) {
+    return res.status(500).json(
+      new ApiResponse(500, "User not created", {
+        success: false,
+        data: "ObjectNotCreateError"
+      })
+    );
+  }
+
+  // Generate JWT token from the newly created user
+  const accessToken = createNewUser.generateAccessToken();
+
+  if (!accessToken) {
+    return res.status(500).json(
+      new ApiResponse(500, "Access token not generated", {
+        success: false,
+        data: "TokenGenerationError"
+      })
+    );
+  }
+
+  return res.status(201).json(
+    new ApiResponse(201, "User registered successfully", {
+      success: true,
+      data: {
+        token: accessToken,
+        user: {
+          _id: createNewUser._id,
+          email: createNewUser.email,
+          username: createNewUser.username,
+          profile_photo: createNewUser.profile_photo,
+          skills_offered: createNewUser.skills_offered,
+          skills_wanted: createNewUser.skills_wanted,
+          github_profile: createNewUser.github_profile,
+          location: createNewUser.location,
+          availability: createNewUser.availability,
+          publicProfile: createNewUser.publicProfile
+        }
+      }
+    })
+  );
 });
 
 
-const login = asyncHandler(async(req,res)=>{
-    const  {email ,  password} = req.body;
-    
-    if (!email || !password) {
-        return res.status(400)
-            .json(
-                new ApiResponse(400, "Please Enter email and password", { success: false, data: "DataNullError" })
-            )
-    }
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-    const isUserExist = await User.findOne({ email: email })
-    if (!isUserExist) {
-        return res.status(400)
-            .json(
-                new ApiResponse(400, "user is not exist", { success: false, data: "ObjectNotExistNull" })
-            )
-    }
+  if (!email || !password) {
+    return res.status(400)
+      .json(
+        new ApiResponse(400, "Please Enter email and password", { success: false, data: "DataNullError" })
+      )
+  }
 
-    const isPasswordCorrect = isUserExist.isPasswordCorrect(password);
-    if(!isPasswordCorrect)
-    {
-        return res.status(400)
-        .json(
-            new ApiResponse(400,"please enter correct password" , {success:false , data:"please enter correct password"})
-        )
-    }
+  const isUserExist = await User.findOne({ email: email })
+  if (!isUserExist) {
+    return res.status(400)
+      .json(
+        new ApiResponse(400, "user is not exist", { success: false, data: "ObjectNotExistNull" })
+      )
+  }
 
-    const accessToken = isUserExist.generateAccessToken();
+  const isPasswordCorrect = isUserExist.isPasswordCorrect(password);
+  if (!isPasswordCorrect) {
+    return res.status(400)
+      .json(
+        new ApiResponse(400, "please enter correct password", { success: false, data: "please enter correct password" })
+      )
+  }
 
-    if(!accessToken)
-    {
-        return res.status(500)
-        .json(
-            new ApiResponse(500,"accesstoken not generates" , {success:false , data:"ObjectNotCreatedError"})
-        )
-    }
+  const accessToken = isUserExist.generateAccessToken();
 
-    return res.status(200)
+  if (!accessToken) {
+    return res.status(500)
+      .json(
+        new ApiResponse(500, "accesstoken not generates", { success: false, data: "ObjectNotCreatedError" })
+      )
+  }
+
+  return res.status(200)
     .json(
-        new ApiResponse(200 , "accesstoken generated successfully" , {success:true , data:accessToken})
+      new ApiResponse(200, "accesstoken generated successfully", { success: true, data: accessToken })
     )
 
 
-    
+
 })
 
-const me = asyncHandler(async(req,res)=>{
-    const user = req.user;
+const me = asyncHandler(async (req, res) => {
+  const user = req.user;
 
-    return res.status(200)
+  return res.status(200)
     .json(
-        new ApiResponse(200,"user info fetch successfully" , {success:true , data:user})
+      new ApiResponse(200, "user info fetch successfully", { success: true, data: user })
     )
 })
 
 const updateProfile = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const updateData = { ...req.body };
+  const userId = req.user._id;
+  const updateData = { ...req.body };
 
-  
 
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
-        new: true,
-        runValidators: true,
-    });
 
-    if (!updatedUser) {
-        return res.status(404).json(
-            new ApiResponse(404, "User not found", {
-                success: false,
-                data: "UserNotFound",
-            })
-        );
-    }
+  const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+    new: true,
+    runValidators: true,
+  });
 
-    return res.status(200).json(
-        new ApiResponse(200, "Profile updated successfully", {
-            success: true,
-            data: updatedUser,
-        })
+  if (!updatedUser) {
+    return res.status(404).json(
+      new ApiResponse(404, "User not found", {
+        success: false,
+        data: "UserNotFound",
+      })
     );
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, "Profile updated successfully", {
+      success: true,
+      data: updatedUser,
+    })
+  );
 });
 
 const forgetPassword = asyncHandler(async (req, res) => {
-    const { email } = req.body;
+  const { email } = req.body;
 
-    if (!email) {
-        return res.status(400).json(
-            new ApiResponse(400, "Email is required", {
-                success: false,
-                data: "MissingEmail",
-            })
-        );
-    }
+  if (!email) {
+    return res.status(400).json(
+      new ApiResponse(400, "Email is required", {
+        success: false,
+        data: "MissingEmail",
+      })
+    );
+  }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-        return res.status(404).json(
-            new ApiResponse(404, "User not found", {
-                success: false,
-                data: "UserNotExist",
-            })
-        );
-    }
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json(
+      new ApiResponse(404, "User not found", {
+        success: false,
+        data: "UserNotExist",
+      })
+    );
+  }
 
-    const otp = generateOTP();
+  const otp = generateOTP();
 
-    await Otp.create({ email, otp });
+  await Otp.create({ email, otp });
 
-    const html = `<h2>Password Reset</h2>
+  const html = `<h2>Password Reset</h2>
                   <p>Your OTP is: <strong>${otp}</strong></p>
                   <p>This OTP is valid for 5 minutes.</p>`;
 
-    const mailSent = await sendMail("Password Reset OTP", html, email);
+  const mailSent = await sendMail("Password Reset OTP", html, email);
 
-    if (!mailSent) {
-        return res.status(500).json(
-            new ApiResponse(500, "Failed to send OTP", {
-                success: false,
-                data: "MailSendError",
-            })
-        );
-    }
-
-    return res.status(200).json(
-        new ApiResponse(200, "OTP sent to your email", {
-            success: true,
-            data: null,
-        })
+  if (!mailSent) {
+    return res.status(500).json(
+      new ApiResponse(500, "Failed to send OTP", {
+        success: false,
+        data: "MailSendError",
+      })
     );
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, "OTP sent to your email", {
+      success: true,
+      data: null,
+    })
+  );
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {
-    const { email, otp } = req.body;
+  const { email, otp } = req.body;
 
-    if (!email || !otp) {
-        return res.status(400).json(
-            new ApiResponse(400, "Email and OTP are required", {
-                success: false,
-                data: "MissingData",
-            })
-        );
-    }
-
-    const existingOtp = await Otp.findOne({ email, otp });
-
-    if (!existingOtp) {
-        return res.status(400).json(
-            new ApiResponse(400, "Invalid or expired OTP", {
-                success: false,
-                data: "InvalidOTP",
-            })
-        );
-    }
-
-    await Otp.deleteMany({ email }); // Cleanup used OTPs
-
-    return res.status(200).json(
-        new ApiResponse(200, "OTP verified successfully", {
-            success: true,
-            data: null,
-        })
+  if (!email || !otp) {
+    return res.status(400).json(
+      new ApiResponse(400, "Email and OTP are required", {
+        success: false,
+        data: "MissingData",
+      })
     );
+  }
+
+  const existingOtp = await Otp.findOne({ email, otp });
+
+  if (!existingOtp) {
+    return res.status(400).json(
+      new ApiResponse(400, "Invalid or expired OTP", {
+        success: false,
+        data: "InvalidOTP",
+      })
+    );
+  }
+
+  await Otp.deleteMany({ email }); // Cleanup used OTPs
+
+  return res.status(200).json(
+    new ApiResponse(200, "OTP verified successfully", {
+      success: true,
+      data: null,
+    })
+  );
 });
 
 
@@ -271,83 +269,109 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
 
 const createSwapRequest = asyncHandler(async (req, res) => {
-    const senderId = req.user._id;
-    const { receiverId,  message } = req.body;
+  const senderId = req.user._id;
+  const { receiverId, message } = req.body;
 
-    if (!receiverId) {
-        return res.status(400).json(
-            new ApiResponse(400, "Required fields are missing", {
-                success: false,
-                data: "MissingData",
-            })
-        );
-    }
-
-    const receiverExists = await User.findById(receiverId);
-    if (!receiverExists) {
-        return res.status(404).json(
-            new ApiResponse(404, "Receiver not found", {
-                success: false,
-                data: "UserNotFound",
-            })
-        );
-    }
-
-    const newSwap = await SwapRequest.create({
-        sender: senderId,
-        receiver: receiverId,
-        message
-    });
-
-    return res.status(201).json(
-        new ApiResponse(201, "Swap request sent", {
-            success: true,
-            data: newSwap,
-        })
+  if (!receiverId) {
+    return res.status(400).json(
+      new ApiResponse(400, "Required fields are missing", {
+        success: false,
+        data: "MissingData",
+      })
     );
+  }
+
+  const receiverExists = await User.findById(receiverId);
+  if (!receiverExists) {
+    return res.status(404).json(
+      new ApiResponse(404, "Receiver not found", {
+        success: false,
+        data: "UserNotFound",
+      })
+    );
+  }
+
+  const newSwap = await SwapRequest.create({
+    sender: senderId,
+    receiver: receiverId,
+    message
+  });
+  const emailBody = `
+  <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #f5f7fa; border-radius: 10px; border: 1px solid #e0e0e0;">
+    <h2 style="color: #333; text-align: center;">🔁 New Skill Swap Request</h2>
+    <p style="font-size: 16px; color: #444;">
+      Hello there! 👋<br/><br/>
+      You’ve received a new <strong>Skill Swap Request</strong> on your account. Someone is interested in exchanging skills with you!
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="http://localhost:5173/requests" 
+         style="background-color: #4f46e5; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 16px;">
+        View Request
+      </a>
+    </div>
+    <p style="font-size: 14px; color: #777; text-align: center;">
+      If the button doesn’t work, copy and paste this link into your browser:<br/>
+      <a href="http://localhost:5173/requests" style="color: #4f46e5;">http://localhost:5173/requests</a>
+    </p>
+    <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+    <p style="font-size: 12px; color: #aaa; text-align: center;">
+      Thanks for being a part of SkillSwap 🌟
+    </p>
+  </div>
+`;
+
+
+  await sendMail("!New Swap request" ,emailBody ,receiverExists.email)
+
+  return res.status(201).json(
+    new ApiResponse(201, "Swap request sent", {
+      success: true,
+      data: newSwap,
+    })
+  );
 });
 
 
 const updateSwapStatus = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const { swapId } = req.params;
-    const { status } = req.body;
+  const userId = req.user._id;
+  const { swapId } = req.params;
+  const { status } = req.body;
 
-    if (!["accepted", "rejected"].includes(status)) {
-        return res.status(400).json(
-            new ApiResponse(400, "Invalid status", {
-                success: false,
-                data: "InvalidStatus",
-            })
-        );
-    }
-
-    const swap = await SwapRequest.findById(swapId);
-
-    if (!swap || swap.receiver.toString() !== userId.toString()) {
-        return res.status(404).json(
-            new ApiResponse(404, "Swap not found or not authorized", {
-                success: false,
-                data: "SwapNotFound",
-            })
-        );
-    }
-
-    swap.status = status;
-    await swap.save();
-
-    return res.status(200).json(
-        new ApiResponse(200, `Swap ${status}`, {
-            success: true,
-            data: swap,
-        })
+  if (!["accepted", "rejected"].includes(status)) {
+    return res.status(400).json(
+      new ApiResponse(400, "Invalid status", {
+        success: false,
+        data: "InvalidStatus",
+      })
     );
+  }
+
+  const swap = await SwapRequest.findById(swapId);
+
+  if (!swap || swap.receiver.toString() !== userId.toString()) {
+    return res.status(404).json(
+      new ApiResponse(404, "Swap not found or not authorized", {
+        success: false,
+        data: "SwapNotFound",
+      })
+    );
+  }
+
+  swap.status = status;
+  await swap.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, `Swap ${status}`, {
+      success: true,
+      data: swap,
+    })
+  );
 });
 
 const getAllUser = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id
-  
-  
+
+
   const users = await User.aggregate([
     {
       $match: { _id: { $ne: currentUserId } }, // exclude current user
@@ -399,21 +423,21 @@ const getAllUser = asyncHandler(async (req, res) => {
   );
 });
 
-const getAllUserNotLogin = asyncHandler(async(req,res)=>{
- const users = await User.find({});
+const getAllUserNotLogin = asyncHandler(async (req, res) => {
+  const users = await User.find({});
 
-    return res.status(200)
+  return res.status(200)
     .json(
-        new ApiResponse(200,"get all user" ,{success:true , data:users})
+      new ApiResponse(200, "get all user", { success: true, data: users })
     )
 })
 
-const deleteAlluser = asyncHandler(async(req,res)=>{
-    const del = await User.deleteMany({});
+const deleteAlluser = asyncHandler(async (req, res) => {
+  const del = await User.deleteMany({});
 
-    return res.status(200)
+  return res.status(200)
     .json(
-        new ApiResponse(200,"delete all user successfully" , {success:true , data:"deleted all users"})
+      new ApiResponse(200, "delete all user successfully", { success: true, data: "deleted all users" })
     )
 })
 
@@ -579,16 +603,50 @@ const getUserDetail = asyncHandler(async (req, res) => {
   );
 });
 
+const allSuccessRequest = asyncHandler(async (req, res) => {
+  const allSendSuccess = await SwapRequest.find({
+    sender: req.user._id,
+    status: "accepted"
+  }).populate("receiver");
 
-export {registerUser,login,me , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus,
-getAllUser,
-deleteAlluser,
-getAllUserNotLogin,
-allsendRequest,
-allReciveRequest,
-acceptSwapRequst,
-rejectSwapRequest,
-getUserDetail
+  const allReceiveSuccess = await SwapRequest.find({
+    receiver: req.user._id,
+    status: "accepted"
+  }).populate("sender");
+
+  return res.status(200).json(
+    new ApiResponse(200, "Successfully fetched all swap requests", {
+      success: true,
+      data: {
+        allSendSuccess,
+        allReceiveSuccess,
+      },
+    })
+  );
+});
+
+
+const allswaprequest = asyncHandler(async(req,res)=>{
+  const allswap = await SwapRequest.find({});
+
+  return res.status(200)
+  .json(
+    new ApiResponse(200,"ok" , {allswap})
+  )
+})
+
+export {
+  registerUser, login, me, updateProfile, forgetPassword, verifyOtp, createSwapRequest, updateSwapStatus,
+  getAllUser,
+  deleteAlluser,
+  getAllUserNotLogin,
+  allsendRequest,
+  allReciveRequest,
+  acceptSwapRequst,
+  rejectSwapRequest,
+  getUserDetail,
+  allSuccessRequest,
+  allswaprequest
 
 }
 

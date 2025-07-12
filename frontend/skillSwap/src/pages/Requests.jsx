@@ -16,6 +16,7 @@ import {
   acceptSwapRequest,
   rejectSwapRequest,
 } from '../api/swapRequests';
+import { useNavigate } from 'react-router-dom';
 
 const Requests = () => {
   const [activeTab, setActiveTab] = useState('received');
@@ -276,7 +277,7 @@ const Requests = () => {
                 ? "You haven't received any skill swap requests yet."
                 : "You haven't sent any skill swap requests yet."}
             </p>
-            {activeTab === 'sent' && <Button>Browse Developers</Button>}
+            {activeTab === 'sent' && <Button onClick={() => navigate('/browse') }>Browse Developers</Button>}
           </div>
         </Card>
       )}

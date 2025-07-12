@@ -17,12 +17,13 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/browse', icon: Search, label: 'Browse' },
-    { path: '/requests', icon: MessageSquare, label: 'Requests' },
-    { path: '/profile', icon: User, label: 'Profile' },
-  ];
+ const navItems = [
+  { path: '/', icon: Home, label: 'Home' },
+  { path: '/browse', icon: Search, label: 'Browse' },
+  { path: '/requests', icon: MessageSquare, label: 'Requests' },
+  { path: '/workspace', icon: MessageSquare, label: 'Workspace' },
+  { path: '/profile', icon: User, label: 'Profile' },
+];
 
   const handleLogout = () => logout();
   const handleLogin = () => navigate('/login');

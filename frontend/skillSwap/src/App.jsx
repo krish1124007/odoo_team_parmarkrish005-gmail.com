@@ -9,7 +9,8 @@ import Requests from './pages/Requests';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './hooks/useAuth';
-
+import Workspace from './pages/Workspace';
+import Call from "./pages/Call"
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -28,6 +29,8 @@ const Layout = () => {
             <Route path="/profile" element={<Profile />} />
             <Route path="/browse" element={<Browse />} />
             <Route path="/requests" element={<Requests />} />
+            <Route path="/workspace" element={<Workspace/>}/>
+            <Route path="/call/:callType/:connectionId" element={<Call />} />
           </Routes>
         </div>
       </main>

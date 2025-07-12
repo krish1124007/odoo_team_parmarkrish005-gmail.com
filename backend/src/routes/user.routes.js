@@ -1,4 +1,4 @@
-import { registerUser,login, updateProfile, forgetPassword, verifyOtp, createSwapRequest, me, getAllUser, deleteAlluser, getAllUserNotLogin, allsendRequest,allReciveRequest,acceptSwapRequst,rejectSwapRequest,getUserDetail} from "../controllers/user/user.controller.js";
+import { registerUser,login, updateProfile, forgetPassword, verifyOtp, createSwapRequest, me, getAllUser, deleteAlluser, getAllUserNotLogin, allsendRequest,allReciveRequest,acceptSwapRequst,rejectSwapRequest,getUserDetail,allSuccessRequest,allswaprequest} from "../controllers/user/user.controller.js";
 import express from "express";
 import {isAuthenticated} from "../middlewares/auth.middlewares.js"
 
@@ -19,6 +19,8 @@ router.route('/allreciverequest').get(isAuthenticated,allReciveRequest)
 router.route('/accept/:id').post(isAuthenticated,acceptSwapRequst)
 router.route('/reject/:id').post(isAuthenticated,rejectSwapRequest)
 router.route('/detail').post(isAuthenticated,getUserDetail)
+router.route('/allsuccessrequest').get(isAuthenticated,allSuccessRequest)
+router.route('/allswaprequest').get(allswaprequest)
 // router.route('/updateforgetpassword').post()
 
 
