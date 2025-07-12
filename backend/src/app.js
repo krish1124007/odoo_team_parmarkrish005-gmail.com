@@ -4,6 +4,7 @@ import cors from "cors";
 import { user_router } from "./routes/user.routes.js";
 import callRoutes from "./routes/call.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 dotenv.config({});
 
@@ -22,6 +23,7 @@ app.use('/public' , express.static('public'))
 app.use('/api/v1/user' , user_router)
 app.use("/api/v1/call", callRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 
 

@@ -1,11 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiSend, FiArrowLeft, FiVideo, FiPhone, FiMoreVertical } from 'react-icons/fi';
+import {
+  FiSend, FiArrowLeft, FiVideo, FiPhone,
+  FiMoreVertical, FiCheck, FiCheckCircle
+} from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Dropdown from '../components/ui/Dropdown';
+import { formatDistanceToNow } from 'date-fns';
 
 const Chat = () => {
   const { connectionId } = useParams();
@@ -15,226 +19,148 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(state?.user || null);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const token = localStorage.getItem('skillswap_token');
 
-  useEffect(() => {
-    const fetchChatData = async () => {
-      try {
-        setLoading(true);
-        // Fetch messages for this connection
-        const messagesResponse = await axios.get(`http://localhost:1124/api/v1/chat/${connectionId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        setMessages(messagesResponse.data?.data || []);
+  const currentUser = JSON.parse(localStorage.getItem('skillswap_user'));
+  let pollingTimer;
 
-        // If user data wasn't passed in location state, fetch it
-        if (!user) {
-          const userId = state?.senderId || state?.receiverId;
-          if (userId) {
-            const userResponse = await axios.get(`http://localhost:1124/api/v1/user/${userId}`, {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            });
-            setUser(userResponse.data?.data?.user);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching chat data', err);
-      } finally {
-        setLoading(false);
-      }
+  const formatMessageTime = (timestamp) => {
+    try {
+      const date = new Date(timestamp);
+      return isNaN(date.getTime()) ? 'Just now' : formatDistanceToNow(date, { addSuffix: true });
+    } catch {
+      return 'Just now';
+    }
+  };
+
+  const fetchChatData = async () => {
+    try {
+      const res = await axios.get(`http://localhost:1124/api/v1/chat/${connectionId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const receivedMessages = Array.isArray(res.data?.data?.messages)
+        ? res.data.data.messages
+        : Array.isArray(res.data?.data)
+        ? res.data.data
+        : [];
+
+      setMessages(prev => {
+        const allIds = new Set(prev.map(m => m._id));
+        const newOnes = receivedMessages.filter(m => !allIds.has(m._id));
+        return [...prev, ...newOnes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      });
+    } catch (err) {
+      console.error('Polling fetch failed', err);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      await fetchChatData();
+      setLoading(false);
     };
 
-    fetchChatData();
+    init();
+    pollingTimer = setInterval(fetchChatData, 10000);
+    return () => clearInterval(pollingTimer);
   }, [connectionId]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    try {
-      const response = await axios.post(
-        'http://localhost:1124/api/v1/chat/send',
-        {
-          connectionId,
-          message: newMessage
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+    const tempId = Date.now();
+    const tempMessage = {
+      _id: tempId,
+      connectionId,
+      sender: currentUser?.data?._id,
+      message: newMessage,
+      createdAt: new Date().toISOString(),
+      read: false
+    };
 
-      setMessages([...messages, response.data.data]);
-      setNewMessage('');
+    setMessages(prev => [...prev, tempMessage]);
+    setNewMessage('');
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    try {
+      const res = await axios.post('http://localhost:1124/api/v1/chat/send', {
+        connectionId,
+        message: newMessage
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setMessages(prev =>
+        prev.map(msg => (msg._id === tempId ? res.data.data : msg))
+      );
     } catch (err) {
-      console.error('Error sending message', err);
+      console.error('Failed to send message:', err);
+      setMessages(prev => prev.filter(m => m._id !== tempId));
     }
   };
 
-  const initiateVideoCall = () => {
-    // Replace with your actual video call implementation
-    // This could be a link to a video call page or initiating a WebRTC call
-    console.log('Initiating video call with', user?.username);
-    navigate(`/call/video/${connectionId}`, { 
-      state: { 
-        user,
-        callType: 'video' 
-      } 
-    });
-  };
-
-  const initiateVoiceCall = () => {
-    // Replace with your actual voice call implementation
-    console.log('Initiating voice call with', user?.username);
-    navigate(`/call/voice/${connectionId}`, { 
-      state: { 
-        user,
-        callType: 'audio' 
-      } 
-    });
-  };
-
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
 
   return (
-    <motion.div
-      className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mr-4"
-            onClick={() => window.history.back()}
-          >
-            <FiArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center">
-            <img
-              src={user?.profile_photo || 'https://via.placeholder.com/40'}
-              alt={user?.username}
-              className="w-10 h-10 rounded-full object-cover mr-3"
-            />
-            <div>
-              <h2 className="font-semibold text-gray-900">{user?.username || 'Chat'}</h2>
-              <p className="text-sm text-gray-500">
-                {user?.skills_offered?.join(', ')}
-              </p>
-            </div>
+    <motion.div className="max-w-3xl mx-auto px-4 py-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-4">
+          <Button onClick={() => navigate(-1)} variant="ghost"><FiArrowLeft /></Button>
+          <img src={user?.profile_photo} alt="" className="w-10 h-10 rounded-full" />
+          <div>
+            <h2 className="font-bold">{user?.username}</h2>
+            <p className="text-sm text-gray-500">{user?.skills_offered?.join(', ')}</p>
           </div>
         </div>
-
         <div className="flex space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-600 hover:text-blue-600"
-            onClick={initiateVoiceCall}
-            title="Voice Call"
-          >
-            <FiPhone className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-600 hover:text-blue-600"
-            onClick={initiateVideoCall}
-            title="Video Call"
-          >
-            <FiVideo className="w-5 h-5" />
-          </Button>
-          <Dropdown
-            trigger={
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-blue-600">
-                <FiMoreVertical className="w-5 h-5" />
-              </Button>
-            }
-            items={[
-              { label: 'View Profile', onClick: () => navigate(`/profile/${user?._id}`) },
-              { label: 'Block User', onClick: () => console.log('Block user') },
-            ]}
-          />
+          <Button variant="ghost"><FiPhone /></Button>
+          <Button variant="ghost"><FiVideo /></Button>
+          <Dropdown trigger={<FiMoreVertical />} items={[{ label: 'View Profile', onClick: () => {} }]} />
         </div>
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        <div className="h-96 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
-              <p>No messages yet</p>
-              <p className="text-sm">Start the conversation!</p>
-            </div>
-          ) : (
-            messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.sender === user?._id ? 'justify-start' : 'justify-end'}`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.sender === user?._id
-                      ? 'bg-gray-100 text-gray-800'
-                      : 'bg-blue-500 text-white'
-                  }`}
-                >
-                  <p>{message.message}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.sender === user?._id ? 'text-gray-500' : 'text-blue-100'
-                  }`}>
-                    {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+      <Card className="h-96 overflow-y-auto p-4 space-y-2">
+        {messages.length === 0 ? (
+          <div className="text-gray-400 text-center">Start the conversation</div>
+        ) : (
+          messages.map(msg => (
+            <div key={msg._id} className={`flex ${msg.sender === currentUser?.data?._id ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-xs px-4 py-2 rounded-lg ${msg.sender === currentUser?.data?._id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-black'}`}>
+                <p>{msg.message}</p>
+                <div className="flex items-center justify-end text-xs mt-1 space-x-1">
+                  <span>{formatMessageTime(msg.createdAt)}</span>
+                  {msg.sender === currentUser?.data?._id && (msg.read ? <FiCheckCircle /> : <FiCheck />)}
                 </div>
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4">
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              className="px-4"
-            >
-              <FiSend className="w-5 h-5" />
-            </Button>
-          </div>
-        </form>
+            </div>
+          ))
+        )}
+        <div ref={messagesEndRef} />
       </Card>
+
+      <form onSubmit={handleSendMessage} className="mt-4 flex space-x-2">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message"
+          className="flex-1 border border-gray-300 rounded-full px-4 py-2"
+        />
+        <Button type="submit" variant="primary" disabled={!newMessage.trim()}>
+          <FiSend />
+        </Button>
+      </form>
     </motion.div>
   );
 };

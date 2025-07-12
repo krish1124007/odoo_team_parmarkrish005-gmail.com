@@ -2,10 +2,11 @@
 import React, { useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { FiVideo, FiPhone, FiMic, FiMicOff, FiVideoOff, FiPhoneOff } from 'react-icons/fi';
+import { useAuth } from '../hooks/useAuth';
 
 const Call = () => {
   const { callType, connectionId } = useParams();
-  const { state } = useLocation();
+  const { user } = useAuth();
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [callStatus, setCallStatus] = useState('connecting');
@@ -68,7 +69,7 @@ const Call = () => {
   // WebRTC implementation would go here
   useEffect(() => {
     // Initialize call based on callType (video/voice)
-    console.log(`Starting ${callType} call with ${state.user?.username}`);
+    console.log(`Starting ${callType} call with ${user.data?.username}`);
     
     // Simulate call connected after 2 seconds
     const timer = setTimeout(() => {
@@ -91,7 +92,7 @@ const Call = () => {
           {callType === 'video' && !isVideoOff ? (
             <div className="text-center">
               <div className="w-full h-full flex items-center justify-center">
-                <div className="text-2xl">Video call with {state.user?.username}</div>
+                <div className="text-2xl">Video call with {user.data?.username}</div>
               </div>
             </div>
           ) : (

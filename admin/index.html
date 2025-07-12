@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - SkillSwap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>👑 Admin Dashboard</h1>
+
+    <section>
+      <h2>🚫 Reject Content</h2>
+      <form id="rejectForm">
+        <input type="text" placeholder="Content ID" id="contentId" required>
+        <input type="text" placeholder="Content Type (e.g., swap, post)" id="contentType" required>
+        <input type="text" placeholder="Reason" id="reason" required>
+        <button type="submit">Reject</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>🛑 Ban User</h2>
+      <form id="banForm">
+        <input type="text" placeholder="User ID" id="userId" required>
+        <input type="text" placeholder="Reason" id="banReason" required>
+        <input type="number" placeholder="Duration (days) [optional]" id="banDuration">
+        <button type="submit">Ban</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>🔍 View Swaps</h2>
+      <select id="swapStatus">
+        <option value="">All</option>
+        <option value="pending">Pending</option>
+        <option value="accepted">Accepted</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <button onclick="fetchSwaps()">Fetch Swaps</button>
+      <div id="swapResults"></div>
+    </section>
+
+    <section>
+      <h2>📢 Send Platform Message</h2>
+      <form id="messageForm">
+        <textarea id="messageText" placeholder="Message..." required></textarea>
+        <select id="audience">
+          <option value="all">All Users</option>
+          <option value="active">Active Only</option>
+        </select>
+        <select id="priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>📊 Generate Report</h2>
+      <form id="reportForm">
+        <select id="reportType" required>
+          <option value="user_activity">User Activity</option>
+          <option value="swap_stats">Swap Stats</option>
+          <option value="feedback">Feedback</option>
+        </select>
+        <input type="date" id="startDate">
+        <input type="date" id="endDate">
+        <button type="submit">Generate</button>
+      </form>
+      <div id="reportResult"></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

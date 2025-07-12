@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiMessageSquare, FiUser, FiClock, FiMapPin, FiGithub } from 'react-icons/fi';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-// import EmptyState from '../components/ui/EmptyState';
+
 
 const Workspace = () => {
   const [connections, setConnections] = useState([]);
