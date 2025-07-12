@@ -8,7 +8,8 @@ import {
   MessageSquare, 
   LogOut,
   Code2,
-  LogIn
+  LogIn,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -23,6 +24,7 @@ const Navigation = () => {
   { path: '/requests', icon: MessageSquare, label: 'Requests' },
   { path: '/workspace', icon: MessageSquare, label: 'Workspace' },
   { path: '/profile', icon: User, label: 'Profile' },
+  {path:'/feedback' , icon:MessageCircle , label:'Feedback'}
 ];
 
   const handleLogout = () => logout();

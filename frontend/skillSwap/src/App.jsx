@@ -12,6 +12,7 @@ import { useAuth } from './hooks/useAuth';
 import Workspace from './pages/Workspace';
 import Call from "./pages/Call"
 import Chat from "./pages/Chat"
+import FeedBack from './pages/FeedBack';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -33,6 +34,7 @@ const Layout = () => {
             <Route path="/workspace" element={<Workspace/>}/>
             <Route path="/chat/:connectionId" element={<Chat/>}/>
             <Route path="/call/:callType/:connectionId" element={<Call />} />
+            <Route path="/feedback" element={<FeedBack/>}/>
           </Routes>
         </div>
       </main>
