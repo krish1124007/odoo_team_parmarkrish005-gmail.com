@@ -4,7 +4,7 @@ import { ApiResponse } from "../../utils/apiResponse.js";
 import { sendMail } from "../../utils/sendMail.js";
 import { generateOTP } from "../../utils/generateOtp.js"
 import { Otp } from "../../models/otp.model.js";
-
+import {SwapRequest} from "../../models/swap.model.js"
 
 const registerUser = asyncHandler(async (req, res) => {
     const {
@@ -265,7 +265,83 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
 //this section about the request swaping
 
-const swapRequest = asyncHandler(async(req,res)=>{})
 
-export {registerUser,login , updateProfile , forgetPassword , verifyOtp , swapRequest}
+
+const createSwapRequest = asyncHandler(async (req, res) => {
+    const senderId = req.user._id;
+    const { receiverId,  message } = req.body;
+
+    if (!receiverId) {
+        return res.status(400).json(
+            new ApiResponse(400, "Required fields are missing", {
+                success: false,
+                data: "MissingData",
+            })
+        );
+    }
+
+    const receiverExists = await User.findById(receiverId);
+    if (!receiverExists) {
+        return res.status(404).json(
+            new ApiResponse(404, "Receiver not found", {
+                success: false,
+                data: "UserNotFound",
+            })
+        );
+    }
+
+    const newSwap = await SwapRequest.create({
+        sender: senderId,
+        receiver: receiverId,
+        message
+    });
+
+    return res.status(201).json(
+        new ApiResponse(201, "Swap request sent", {
+            success: true,
+            data: newSwap,
+        })
+    );
+});
+
+
+const updateSwapStatus = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const { swapId } = req.params;
+    const { status } = req.body;
+
+    if (!["accepted", "rejected"].includes(status)) {
+        return res.status(400).json(
+            new ApiResponse(400, "Invalid status", {
+                success: false,
+                data: "InvalidStatus",
+            })
+        );
+    }
+
+    const swap = await SwapRequest.findById(swapId);
+
+    if (!swap || swap.receiver.toString() !== userId.toString()) {
+        return res.status(404).json(
+            new ApiResponse(404, "Swap not found or not authorized", {
+                success: false,
+                data: "SwapNotFound",
+            })
+        );
+    }
+
+    swap.status = status;
+    await swap.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, `Swap ${status}`, {
+            success: true,
+            data: swap,
+        })
+    );
+});
+
+
+
+export {registerUser,login , updateProfile , forgetPassword , verifyOtp , createSwapRequest}
 
