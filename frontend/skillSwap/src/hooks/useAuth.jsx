@@ -61,12 +61,30 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
-  const updateProfile = (userData) => {
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-    }
-  };
+ const updateProfile = async (userData) => {
+  try {
+    const token = localStorage.getItem('skillswap_token');
+    if (!token) throw new Error("No token found");
+
+    const response = await axios.put(
+      'http://localhost:1124/api/v1/user/update',
+      userData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const updatedUser = response.data.data;
+    setUser(updatedUser);
+    return updatedUser;
+  } catch (error) {
+    console.error('Failed to update user profile:', error);
+    throw error;
+  }
+};
+
 
   const getUserProfile = async () => {
     try {

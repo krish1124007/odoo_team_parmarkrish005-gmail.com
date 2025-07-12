@@ -5,14 +5,13 @@ import { useAuth } from '../hooks/useAuth';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import axios from 'axios';
+import UserProfilePopup from '../components/UserProfilePopup';
 
 const Home = () => {
   const { user } = useAuth();
   const [suggestions, setSuggestions] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const token = localStorage.getItem('skillswap_token');
-  console.log(user)
-  
- 
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -21,9 +20,7 @@ const Home = () => {
           ? 'http://localhost:1124/api/v1/user/getalluser'
           : 'http://localhost:1124/api/v1/user/getalluser-notlogin';
 
-        const headers = token
-          ? { Authorization: `Bearer ${token}` }
-          : {};
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const response = await axios.get(url, { headers });
         const users = response.data.data.data;
@@ -42,13 +39,9 @@ const Home = () => {
 
   const sendSwapRequest = async (receiverId, message) => {
     try {
-      const token = localStorage.getItem('skillswap_token');
       const response = await axios.post(
         'http://localhost:1124/api/v1/user/sendswaprequest',
-        {
-          receiverId: receiverId,
-          message: message || '',
-        },
+        { receiverId, message: message || '' },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -94,7 +87,7 @@ const Home = () => {
                 <motion.div key={suggestion._id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
                   <Card>
                     <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
+                      <div className="flex items-start space-x-4 cursor-pointer" onClick={() => setSelectedUserId(suggestion._id)}>
                         <img src={suggestion.profile_photo} alt="avatar" className="w-12 h-12 rounded-full object-cover" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -139,18 +132,26 @@ const Home = () => {
                         <div className="text-sm font-medium text-blue-600">{suggestion.matchScore || 50}% match</div>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline"><Github className="h-4 w-4" /></Button>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              if (!user || !user.data) {
-                                alert('Please login to use connect feature.');
-                                return;
-                              }
-                              sendSwapRequest(suggestion._id, 'connect');
-                            }}
-                          >
-                            Connect
-                          </Button>
+                          {suggestion.userConnect?.status === 'pending' ? (
+                            <Button size="sm" disabled>Request Pending</Button>
+                          ) : suggestion.userConnect?.status === 'accepted' ? (
+                            <Button size="sm" variant="success" disabled>Connected</Button>
+                          ) : suggestion.userConnect?.status === 'rejected' ? (
+                            <Button size="sm" variant="destructive" disabled>Rejected</Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                if (!user || !user.data) {
+                                  alert('Please login to use connect feature.');
+                                  return;
+                                }
+                                sendSwapRequest(suggestion._id, 'connect');
+                              }}
+                            >
+                              Connect
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -190,6 +191,13 @@ const Home = () => {
           </Card>
         </div>
       </div>
+
+      {selectedUserId && (
+        <UserProfilePopup
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </motion.div>
   );
 };

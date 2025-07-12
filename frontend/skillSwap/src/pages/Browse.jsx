@@ -1,124 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Star, MapPin, Clock, Github } from 'lucide-react';
+import { Search, Filter, Star, MapPin, Clock, Github, Send } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import axios from 'axios';
 
 const Browse = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [sending, setSending] = useState(false);
 
-  // Mock data for users
-  const users = [
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      username: 'sarahcodes',
-      location: 'San Francisco, CA',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'],
-      skillsWanted: ['React', 'TypeScript', 'Node.js'],
-      rating: 4.9,
-      reviews: 23,
-      availability: 'Weekends',
-      githubProfile: 'https://github.com/sarahcodes',
-      joined: '2023'
-    },
-    {
-      id: 2,
-      name: 'Marcus Johnson',
-      username: 'marcusdev',
-      location: 'New York, NY',
-      avatar: 'https://images.pexels.com/photos/1300402/pexels-photo-1300402.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['DevOps', 'Docker', 'AWS', 'Kubernetes'],
-      skillsWanted: ['Node.js', 'React', 'GraphQL'],
-      rating: 4.8,
-      reviews: 31,
-      availability: 'Evenings',
-      githubProfile: 'https://github.com/marcusdev',
-      joined: '2022'
-    },
-    {
-      id: 3,
-      name: 'Emily Rodriguez',
-      username: 'emilyux',
-      location: 'Austin, TX',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['UI/UX Design', 'Figma', 'Adobe Creative Suite', 'Prototyping'],
-      skillsWanted: ['Frontend Development', 'Vue.js', 'CSS Animations'],
-      rating: 4.7,
-      reviews: 18,
-      availability: 'Flexible',
-      githubProfile: 'https://github.com/emilyux',
-      joined: '2023'
-    },
-    {
-      id: 4,
-      name: 'David Kim',
-      username: 'davidcode',
-      location: 'Seattle, WA',
-      avatar: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
-      skillsWanted: ['Backend Development', 'PostgreSQL', 'Go'],
-      rating: 4.6,
-      reviews: 15,
-      availability: 'Weekdays',
-      githubProfile: 'https://github.com/davidcode',
-      joined: '2024'
-    },
-    {
-      id: 5,
-      name: 'Lisa Wang',
-      username: 'lisatech',
-      location: 'Los Angeles, CA',
-      avatar: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['iOS Development', 'Swift', 'SwiftUI', 'Mobile Design'],
-      skillsWanted: ['Flutter', 'React Native', 'Android'],
-      rating: 4.9,
-      reviews: 27,
-      availability: 'Weekends',
-      githubProfile: 'https://github.com/lisatech',
-      joined: '2022'
-    },
-    {
-      id: 6,
-      name: 'Alex Chen',
-      username: 'alexfullstack',
-      location: 'Chicago, IL',
-      avatar: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['Full Stack Development', 'Node.js', 'Express', 'MongoDB'],
-      skillsWanted: ['System Design', 'Microservices', 'Redis'],
-      rating: 4.5,
-      reviews: 12,
-      availability: 'Evenings',
-      githubProfile: 'https://github.com/alexfullstack',
-      joined: '2023'
+  const token = localStorage.getItem('skillswap_token');
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const url = token
+          ? 'http://localhost:1124/api/v1/user/getalluser'
+          : 'http://localhost:1124/api/v1/user/getalluser-notlogin';
+
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await axios.get(url, { headers });
+        const fetchedUsers = response.data.data.data;
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+
+    fetchUsers();
+  }, [token]);
+
+  const sendConnectRequest = async (receiverId) => {
+    try {
+      setSending(true);
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      await axios.post(
+        'http://localhost:1124/api/v1/swap/request',
+        { receiverId },
+        { headers }
+      );
+      const updatedUsers = users.map(user =>
+        user._id === receiverId ? { ...user, userConnect: { status: 'pending' } } : user
+      );
+      setUsers(updatedUsers);
+    } catch (error) {
+      console.error('Failed to send connect request:', error);
+    } finally {
+      setSending(false);
     }
-  ];
+  };
 
   const allSkills = Array.from(
-    new Set(users.flatMap(user => [...user.skillsOffered, ...user.skillsWanted]))
+    new Set(users.flatMap(user => [...(user.skills_offered || []), ...(user.skills_wanted || [])]))
   ).sort();
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = searchTerm === '' || 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.skillsOffered.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      user.skillsWanted.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = searchTerm === '' ||
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.skills_offered || []).some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.skills_wanted || []).some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesSkills = selectedSkills.length === 0 ||
-      selectedSkills.some(skill => 
-        user.skillsOffered.includes(skill) || user.skillsWanted.includes(skill)
+      selectedSkills.some(skill =>
+        (user.skills_offered || []).includes(skill) ||
+        (user.skills_wanted || []).includes(skill)
       );
 
     return matchesSearch && matchesSkills;
   });
 
   const toggleSkillFilter = (skill) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
+    setSelectedSkills(prev =>
+      prev.includes(skill)
         ? prev.filter(s => s !== skill)
         : [...prev, skill]
     );
@@ -130,7 +88,6 @@ const Browse = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Header */}
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
           Browse Developers
@@ -140,7 +97,6 @@ const Browse = () => {
         </p>
       </div>
 
-      {/* Search and Filters */}
       <Card>
         <div className="space-y-4">
           <div className="flex gap-4">
@@ -149,7 +105,7 @@ const Browse = () => {
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name or skills..."
+                placeholder="Search by username or skills..."
                 className="pl-10"
               />
             </div>
@@ -162,7 +118,6 @@ const Browse = () => {
             </Button>
           </div>
 
-          {/* Skill Filters */}
           {showFilters && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -202,71 +157,76 @@ const Browse = () => {
         </div>
       </Card>
 
-      {/* Results */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredUsers.map((user, index) => (
           <motion.div
-            key={user.id}
+            key={user._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
             <Card>
               <div className="space-y-4">
-                {/* User Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
                     <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-full object-cover"
+                      src={user.profile_photo}
+                      alt={user.username}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
                     />
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
-                      <p className="text-sm text-gray-600">@{user.username}</p>
+                      <h3 className="text-lg font-semibold text-gray-900">{user.username}</h3>
+                      <p className="text-sm text-gray-600">{user.email}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <div className="flex items-center gap-1">
                           <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                          <span className="text-sm text-gray-600">{user.rating}</span>
-                          <span className="text-sm text-gray-500">({user.reviews} reviews)</span>
+                          <span className="text-sm text-gray-600">5.0</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(user.githubProfile, '_blank')}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => window.open(user.github, '_blank')}>
                       <Github className="h-4 w-4" />
                     </Button>
-                    <Button size="sm">
-                      Connect
+                    <Button
+                      size="sm"
+                      className={`transition-all duration-300 ${
+                        user.userConnect?.status === 'pending'
+                          ? 'bg-yellow-400 text-white'
+                          : user.userConnect?.status === 'accepted'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                      onClick={() => user.userConnect ? null : sendConnectRequest(user._id)}
+                      disabled={sending || user.userConnect}
+                    >
+                      {user.userConnect?.status === 'pending'
+                        ? 'Request Pending'
+                        : user.userConnect?.status === 'accepted'
+                        ? 'Connected'
+                        : 'Connect'}
                     </Button>
                   </div>
                 </div>
 
-                {/* User Info */}
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
-                    {user.location}
+                    {user.location || 'N/A'}
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {user.availability}
+                    {(user.availability && user.availability[0]) || 'Flexible'}
                   </div>
-                  <span>Joined {user.joined}</span>
                 </div>
 
-                {/* Skills */}
                 <div className="space-y-3">
                   <div>
                     <span className="text-sm text-gray-500 block mb-2">Offers:</span>
                     <div className="flex flex-wrap gap-1">
-                      {user.skillsOffered.map((skill, i) => (
+                      {(user.skills_offered || []).map((skill, i) => (
                         <span
                           key={i}
                           className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
@@ -279,7 +239,7 @@ const Browse = () => {
                   <div>
                     <span className="text-sm text-gray-500 block mb-2">Wants to learn:</span>
                     <div className="flex flex-wrap gap-1">
-                      {user.skillsWanted.map((skill, i) => (
+                      {(user.skills_wanted || []).map((skill, i) => (
                         <span
                           key={i}
                           className="inline-block px-2 py-1 text-xs bg-emerald-100 text-emerald-800 rounded-full"

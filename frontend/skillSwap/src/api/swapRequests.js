@@ -38,3 +38,23 @@ export const getReceivedSwapRequests = async () => {
     throw error;
   }
 };
+
+
+export const acceptSwapRequest = async (id) => {
+  const token = localStorage.getItem('skillswap_token');
+  const response = await axios.post(
+    `http://localhost:1124/api/v1/user/accept/${id}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const rejectSwapRequest = async (id) => {
+  const token = localStorage.getItem('skillswap_token');
+  const response = await axios.delete(
+    `http://localhost:1124/api/v1/user/reject/${id}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};

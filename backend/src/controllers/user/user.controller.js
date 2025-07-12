@@ -159,14 +159,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const updateData = { ...req.body };
 
-    if (updateData.email) {
-        return res.status(400).json(
-            new ApiResponse(400, "Email cannot be updated", {
-                success: false,
-                data: "EmailUpdateError",
-            })
-        );
-    }
+  
 
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
         new: true,
@@ -459,9 +452,132 @@ const allReciveRequest = asyncHandler(async (req, res) => {
   );
 });
 
-const acceptSwapRequst = asyncHandler(async(req,res)=>{})
+const acceptSwapRequst = asyncHandler(async (req, res) => {
+  const requestId = req.params.id;
 
-const rejectSwapRequest = asyncHandler(async(req,res)=>{})
+  const request = await SwapRequest.findById(requestId);
+  if (!request) {
+    return res.status(404).json({
+      success: false,
+      message: "Swap request not found",
+    });
+  }
+
+  // Only receiver can accept the request
+  if (request.receiver.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to accept this request",
+    });
+  }
+
+  request.status = "accepted";
+  await request.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "Swap request accepted successfully",
+    data: request,
+  });
+});
+
+
+const rejectSwapRequest = asyncHandler(async (req, res) => {
+  const requestId = req.params.id;
+
+  const request = await SwapRequest.findById(requestId);
+  if (!request) {
+    return res.status(404).json({
+      success: false,
+      message: "Swap request not found",
+    });
+  }
+
+  // Only receiver can reject (delete) the request
+  if (request.receiver.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to reject this request",
+    });
+  }
+
+  await request.deleteOne();
+
+  return res.status(200).json({
+    success: true,
+    message: "Swap request rejected and deleted successfully",
+  });
+});
+
+const getUserDetail = asyncHandler(async (req, res) => {
+  const { id } = req.body;
+  const currentUserId = req.user._id;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, 'Invalid user ID provided'));
+  }
+
+  // 1. Get user data
+  const user = await User.findById(id).select(
+    'username email profile_photo location skills_offered skills_wanted'
+  );
+  if (!user) {
+    return res
+      .status(404)
+      .json(new ApiResponse(404, 'User not found'));
+  }
+
+  // 2. Check for existing swap request
+  const request = await SwapRequest.findOne({
+    $or: [
+      { sender: currentUserId, receiver: id },
+      { sender: id, receiver: currentUserId },
+    ],
+  });
+
+  let status = null;
+  let isSent = false;
+  let isReceived = false;
+
+  if (request) {
+    status = request.status;
+
+    if (request.sender.toString() === currentUserId.toString()) {
+      isSent = true;
+    } else {
+      isReceived = true;
+    }
+  }
+
+  // 3. Determine action button logic
+  let action = null;
+  if (!request) {
+    action = 'send-request';
+  } else if (status === 'pending') {
+    if (isSent) {
+      action = 'requested';
+    } else if (isReceived) {
+      action = 'respond'; // show accept/reject buttons
+    }
+  } else {
+    action = status; // accepted / rejected
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, 'User detail fetched successfully', {
+      user,
+      swapRequest: {
+        exists: !!request,
+        status,
+        isSent,
+        isReceived,
+        action,
+      },
+    })
+  );
+});
 
 
 export {registerUser,login,me , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus,
@@ -469,7 +585,10 @@ getAllUser,
 deleteAlluser,
 getAllUserNotLogin,
 allsendRequest,
-allReciveRequest
+allReciveRequest,
+acceptSwapRequst,
+rejectSwapRequest,
+getUserDetail
 
 }
 

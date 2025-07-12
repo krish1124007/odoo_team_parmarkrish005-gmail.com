@@ -13,6 +13,8 @@ import React, { useEffect, useState } from 'react';
 import {
   getReceivedSwapRequests,
   getSentSwapRequests,
+  acceptSwapRequest,
+  rejectSwapRequest,
 } from '../api/swapRequests';
 
 const Requests = () => {
@@ -21,24 +23,24 @@ const Requests = () => {
   const [receivedRequests, setReceivedRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      setLoading(true);
-      try {
-        const [receivedData, sentData] = await Promise.all([
-          getReceivedSwapRequests(),
-          getSentSwapRequests(),
-        ]);
-        setReceivedRequests(receivedData);
-        setSentRequests(sentData);
-      } catch (err) {
-        console.error('Error loading requests', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchAllRequests = async () => {
+    setLoading(true);
+    try {
+      const [receivedData, sentData] = await Promise.all([
+        getReceivedSwapRequests(),
+        getSentSwapRequests(),
+      ]);
+      setReceivedRequests(receivedData);
+      setSentRequests(sentData);
+    } catch (err) {
+      console.error('Error loading requests', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchRequests();
+  useEffect(() => {
+    fetchAllRequests();
   }, []);
 
   const getStatusIcon = (status) => {
@@ -47,7 +49,7 @@ const Requests = () => {
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'accepted':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'declined':
+      case 'rejected':
         return <XCircle className="h-4 w-4 text-red-500" />;
       default:
         return null;
@@ -60,16 +62,27 @@ const Requests = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'accepted':
         return 'bg-green-100 text-green-800';
-      case 'declined':
+      case 'rejected':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleRequestAction = (id, action) => {
-    console.log(`${action} request ${id}`);
-    // TODO: call accept/decline API
+  const handleRequestAction = async (id, action) => {
+    try {
+      if (action === 'accept') {
+        await acceptSwapRequest(id);
+        alert('✅ Request accepted successfully');
+      } else if (action === 'decline') {
+        await rejectSwapRequest(id);
+        alert('❌ Request declined and deleted');
+      }
+      await fetchAllRequests(); // refresh list
+    } catch (err) {
+      console.error(`Error while trying to ${action} request`, err);
+      alert(`❌ Failed to ${action} request`);
+    }
   };
 
   if (loading) return <p>Loading...</p>;
