@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer"
 
-async function sendOtp(subject, html, email) {
+async function sendMail(subject, html, email) {
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -27,4 +27,4 @@ async function sendOtp(subject, html, email) {
   }
 }
 
-export { sendOtp }
+export { sendMail }

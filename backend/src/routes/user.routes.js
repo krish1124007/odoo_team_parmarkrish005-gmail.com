@@ -11,3 +11,4 @@ router.route('/verifyotp').post(verifyOtp)
 // router.route('/updateforgetpassword').post()
 
 
+export const user_router = router;

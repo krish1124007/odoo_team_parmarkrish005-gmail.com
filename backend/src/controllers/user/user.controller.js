@@ -7,49 +7,96 @@ import { Otp } from "../../models/otp.model.js";
 
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400)
-            .json(
-                new ApiResponse(400, "Please Enter email and password", { success: false, data: "DataNullError" })
-            )
+    const {
+        email,
+        password,
+        username,
+        profile_photo,
+        skills_offered,
+        skills_wanted,
+        github_profile,
+        location,
+        availability,
+        publicProfile
+    } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !skills_offered || !skills_wanted || !github_profile) {
+        return res.status(400).json(
+            new ApiResponse(400, "Required fields missing", {
+                success: false,
+                data: "MissingFieldsError"
+            })
+        );
     }
 
-    const isUserExist = await User.findOne({ email: email })
+    // Check if user already exists
+    const isUserExist = await User.findOne({ email });
     if (isUserExist) {
-        return res.status(400)
-            .json(
-                new ApiResponse(400, "user is already exist", { success: false, data: "ObjectAlreadyExistNull" })
-            )
+        return res.status(400).json(
+            new ApiResponse(400, "User already exists", {
+                success: false,
+                data: "ObjectAlreadyExistError"
+            })
+        );
     }
 
-    const createNewUser = await User.create({ email, password })
+    // Create new user
+    const createNewUser = await User.create({
+        email,
+        password,
+        username,
+        profile_photo,
+        skills_offered,
+        skills_wanted,
+        github_profile,
+        location,
+        availability,
+        publicProfile
+    });
 
     if (!createNewUser) {
-        return res.status(500)
-            .json(
-                new ApiResponse(500, "user is not created", { success: false, data: "ObjectNotCreateError" })
-            )
+        return res.status(500).json(
+            new ApiResponse(500, "User not created", {
+                success: false,
+                data: "ObjectNotCreateError"
+            })
+        );
     }
 
-    const accessToken = isUserExist.generateAccessToken();
+    // Generate JWT token from the newly created user
+    const accessToken = createNewUser.generateAccessToken();
 
-
-    if(!accessToken)
-    {
-        return res.status(500)
-        .json(
-            new ApiResponse(500,"accesstoken not generates" , {success:false , data:"ObjectNotCreatedError"})
-        )
+    if (!accessToken) {
+        return res.status(500).json(
+            new ApiResponse(500, "Access token not generated", {
+                success: false,
+                data: "TokenGenerationError"
+            })
+        );
     }
 
-    return res.status(200)
-    .json(
-        new ApiResponse(200 , "accesstoken generated successfully" , {success:true , data:accessToken})
-    )
-
-    
-})
+    return res.status(201).json(
+        new ApiResponse(201, "User registered successfully", {
+            success: true,
+            data: {
+                token: accessToken,
+                user: {
+                    _id: createNewUser._id,
+                    email: createNewUser.email,
+                    username: createNewUser.username,
+                    profile_photo: createNewUser.profile_photo,
+                    skills_offered: createNewUser.skills_offered,
+                    skills_wanted: createNewUser.skills_wanted,
+                    github_profile: createNewUser.github_profile,
+                    location: createNewUser.location,
+                    availability: createNewUser.availability,
+                    publicProfile: createNewUser.publicProfile
+                }
+            }
+        })
+    );
+});
 
 
 const login = asyncHandler(async(req,res)=>{
