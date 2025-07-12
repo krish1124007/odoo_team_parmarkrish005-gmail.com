@@ -1,4 +1,4 @@
-import { registerUser,login, updateProfile, forgetPassword, verifyOtp, createSwapRequest } from "../controllers/user/user.controller.js";
+import { registerUser,login, updateProfile, forgetPassword, verifyOtp, createSwapRequest, me, getAllUser, deleteAlluser } from "../controllers/user/user.controller.js";
 import express from "express";
 import {isAuthenticated} from "../middlewares/auth.middlewares.js"
 
@@ -10,6 +10,9 @@ router.route('/update').patch(isAuthenticated,updateProfile);
 router.route('/forgetpassword').post(isAuthenticated,forgetPassword);
 router.route('/verifyotp').post(verifyOtp)
 router.route('/sendswaprequest').post(isAuthenticated,createSwapRequest)
+router.route('/me').get(isAuthenticated,me)
+router.route('/getalluser').get(getAllUser);
+router.route('/deletealluser').delete(deleteAlluser)
 // router.route('/updateforgetpassword').post()
 
 

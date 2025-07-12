@@ -145,6 +145,15 @@ const login = asyncHandler(async(req,res)=>{
     
 })
 
+const me = asyncHandler(async(req,res)=>{
+    const user = req.user;
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,"user info fetch successfully" , {success:true , data:user})
+    )
+})
+
 const updateProfile = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const updateData = { ...req.body };
@@ -341,7 +350,29 @@ const updateSwapStatus = asyncHandler(async (req, res) => {
     );
 });
 
+const getAllUser = asyncHandler(async(req,res)=>{
+    
+    const users = await User.find({});
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,"get all user" ,{success:true , data:users})
+    )
+})
+
+const deleteAlluser = asyncHandler(async(req,res)=>{
+    const del = await User.deleteMany({});
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,"delete all user successfully" , {success:true , data:"deleted all users"})
+    )
+})
 
 
-export {registerUser,login , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus}
+export {registerUser,login,me , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus,
+getAllUser,
+deleteAlluser
+
+}
 

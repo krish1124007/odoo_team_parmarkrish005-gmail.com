@@ -3,50 +3,31 @@ import { motion } from 'framer-motion';
 import { Clock, Star, MapPin, Github } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
+import Button from '../components/ui/Button'
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 const Home = () => {
   const { user } = useAuth();
-
-  // Mock data for skill swap suggestions
-  const suggestions = [
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      username: 'sarahcodes',
-      location: 'San Francisco, CA',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['Python', 'Machine Learning', 'Data Science'],
-      skillsWanted: ['React', 'TypeScript'],
-      rating: 4.9,
-      availability: 'Weekends',
-      matchScore: 95
-    },
-    {
-      id: 2,
-      name: 'Marcus Johnson',
-      username: 'marcusdev',
-      location: 'New York, NY',
-      avatar: 'https://images.pexels.com/photos/1300402/pexels-photo-1300402.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['DevOps', 'Docker', 'AWS'],
-      skillsWanted: ['Node.js', 'React'],
-      rating: 4.8,
-      availability: 'Evenings',
-      matchScore: 88
-    },
-    {
-      id: 3,
-      name: 'Emily Rodriguez',
-      username: 'emilyux',
-      location: 'Austin, TX',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      skillsOffered: ['UI/UX Design', 'Figma', 'Adobe Creative Suite'],
-      skillsWanted: ['Frontend Development', 'Vue.js'],
-      rating: 4.7,
-      availability: 'Flexible',
-      matchScore: 82
+  const [suggestions, setSuggestions] = useState([]);
+  useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+    
+      const response = await axios.get('http://localhost:1124/api/v1/user/getalluser');
+      setSuggestions(response.data.data.data); // adjust if API structure is different
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
-  ];
+  };
+
+  fetchUsers();
+}, []);
+
+  console.log(suggestions)
+  console.log(user)
+  // Mock data for skill swap suggestions
+ 
 
   const recentActivity = [
     {
@@ -115,19 +96,19 @@ const Home = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
                         <img
-                          src={suggestion.avatar}
-                          alt={suggestion.name}
+                          src={suggestion.profile_photo}
+                          alt="nothiung"
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-medium text-gray-900">
-                              {suggestion.name}
+                              {suggestion.username}
                             </h3>
                             <span className="text-sm text-gray-500">@{suggestion.username}</span>
                             <div className="flex items-center gap-1">
                               <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                              <span className="text-sm text-gray-600">{suggestion.rating}</span>
+                              <span className="text-sm text-gray-600">{suggestion.rating || 5}</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
@@ -137,14 +118,14 @@ const Home = () => {
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              {suggestion.availability}
+                              {suggestion.availability[0]}
                             </div>
                           </div>
                           <div className="space-y-2">
                             <div>
                               <span className="text-sm text-gray-500">Offers: </span>
                               <div className="inline-flex flex-wrap gap-1">
-                                {suggestion.skillsOffered.map((skill, i) => (
+                                {suggestion.skills_offered.map((skill, i) => (
                                   <span
                                     key={i}
                                     className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
@@ -157,7 +138,7 @@ const Home = () => {
                             <div>
                               <span className="text-sm text-gray-500">Wants: </span>
                               <div className="inline-flex flex-wrap gap-1">
-                                {suggestion.skillsWanted.map((skill, i) => (
+                                {suggestion.skills_wanted.map((skill, i) => (
                                   <span
                                     key={i}
                                     className="inline-block px-2 py-1 text-xs bg-emerald-100 text-emerald-800 rounded-full"
@@ -172,7 +153,7 @@ const Home = () => {
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <div className="text-sm font-medium text-blue-600">
-                          {suggestion.matchScore}% match
+                          {suggestion.matchScore || 50}% match
                         </div>
                         <div className="flex gap-2">
                           <Button size="sm" variant="outline">
