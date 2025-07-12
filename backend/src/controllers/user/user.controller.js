@@ -424,11 +424,52 @@ const deleteAlluser = asyncHandler(async(req,res)=>{
     )
 })
 
+const allsendRequest = asyncHandler(async (req, res) => {
+  const id = req.user._id;
+  console.log(id)
+
+  // Find all requests where current user is the sender
+  const sentRequests = await SwapRequest.find({ sender: id })
+    .populate('receiver', 'username email profile_photo location skills_offered skills_wanted') // only include required fields
+    .sort({ createdAt: -1 }); // optional: most recent first
+
+  return res.status(200).json(
+    new ApiResponse(200, "All sent requests fetched successfully", {
+      success: true,
+      data: sentRequests,
+    })
+  );
+});
+
+
+const allReciveRequest = asyncHandler(async (req, res) => {
+  const id = req.user._id;
+  console.log("Receiver ID:", id);
+
+  // Find all requests where current user is the receiver
+  const receivedRequests = await SwapRequest.find({ receiver: id })
+    .populate('sender', 'username email profile_photo location skills_offered skills_wanted') // populate sender details
+    .sort({ createdAt: -1 }); // latest requests first
+
+  return res.status(200).json(
+    new ApiResponse(200, "All received requests fetched successfully", {
+      success: true,
+      data: receivedRequests,
+    })
+  );
+});
+
+const acceptSwapRequst = asyncHandler(async(req,res)=>{})
+
+const rejectSwapRequest = asyncHandler(async(req,res)=>{})
+
 
 export {registerUser,login,me , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus,
 getAllUser,
 deleteAlluser,
-getAllUserNotLogin
+getAllUserNotLogin,
+allsendRequest,
+allReciveRequest
 
 }
 

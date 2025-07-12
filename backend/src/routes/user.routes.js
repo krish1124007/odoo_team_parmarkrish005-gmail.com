@@ -1,4 +1,4 @@
-import { registerUser,login, updateProfile, forgetPassword, verifyOtp, createSwapRequest, me, getAllUser, deleteAlluser, getAllUserNotLogin } from "../controllers/user/user.controller.js";
+import { registerUser,login, updateProfile, forgetPassword, verifyOtp, createSwapRequest, me, getAllUser, deleteAlluser, getAllUserNotLogin, allsendRequest,allReciveRequest } from "../controllers/user/user.controller.js";
 import express from "express";
 import {isAuthenticated} from "../middlewares/auth.middlewares.js"
 
@@ -14,6 +14,8 @@ router.route('/me').get(isAuthenticated,me)
 router.route('/getalluser').get(isAuthenticated,getAllUser);
 router.route('/deletealluser').delete(deleteAlluser),
 router.route('/getalluser-notlogin').get(getAllUserNotLogin)
+router.route('/allsendrequest').get(isAuthenticated,allsendRequest)
+router.route('/allreciverequest').get(isAuthenticated,allReciveRequest)
 // router.route('/updateforgetpassword').post()
 
 

@@ -5,6 +5,7 @@ import { User } from "../models/user.models.js";
 
 export const isAuthenticated = asyncHandler(async (req, res, next) => {
     const authHeader = req.headers.authorization;
+    console.log("auth is",authHeader)
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json(

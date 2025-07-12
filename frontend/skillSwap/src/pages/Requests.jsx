@@ -1,102 +1,45 @@
-import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, CheckCircle, XCircle, MessageSquare, User, Calendar } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  MessageSquare,
+  User,
+  Calendar,
+} from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import React, { useEffect, useState } from 'react';
+import {
+  getReceivedSwapRequests,
+  getSentSwapRequests,
+} from '../api/swapRequests';
 
 const Requests = () => {
   const [activeTab, setActiveTab] = useState('received');
+  const [loading, setLoading] = useState(true);
+  const [receivedRequests, setReceivedRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
 
-  // Mock data for requests
-  const receivedRequests = [
-    {
-      id: 1,
-      from: {
-        name: 'Alex Kim',
-        username: 'alexdev',
-        avatar: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=150'
-      },
-      skillOffered: 'React Native',
-      skillWanted: 'Node.js',
-      message: 'Hi! I saw your profile and I think we could have a great skill swap. I can help you with React Native development, and I\'d love to learn Node.js from you.',
-      status: 'pending',
-      createdAt: '2 hours ago',
-      proposedSchedule: 'Weekends, 2-3 hours per session'
-    },
-    {
-      id: 2,
-      from: {
-        name: 'Sarah Wilson',
-        username: 'sarahdesign',
-        avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
-      },
-      skillOffered: 'UI/UX Design',
-      skillWanted: 'React',
-      message: 'Hello! I\'m interested in learning React and I can offer UI/UX design skills in exchange. Would you be interested?',
-      status: 'pending',
-      createdAt: '1 day ago',
-      proposedSchedule: 'Evenings, 1-2 hours per session'
-    },
-    {
-      id: 3,
-      from: {
-        name: 'Michael Chen',
-        username: 'mikecode',
-        avatar: 'https://images.pexels.com/photos/1300402/pexels-photo-1300402.jpeg?auto=compress&cs=tinysrgb&w=150'
-      },
-      skillOffered: 'Python',
-      skillWanted: 'TypeScript',
-      message: 'Hey! I\'m a Python developer looking to learn TypeScript. I can help you with Python in return.',
-      status: 'accepted',
-      createdAt: '3 days ago',
-      proposedSchedule: 'Weekdays after 6 PM'
-    }
-  ];
+  useEffect(() => {
+    const fetchRequests = async () => {
+      setLoading(true);
+      try {
+        const [receivedData, sentData] = await Promise.all([
+          getReceivedSwapRequests(),
+          getSentSwapRequests(),
+        ]);
+        setReceivedRequests(receivedData);
+        setSentRequests(sentData);
+      } catch (err) {
+        console.error('Error loading requests', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const sentRequests = [
-    {
-      id: 4,
-      to: {
-        name: 'Emma Davis',
-        username: 'emmatech',
-        avatar: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=150'
-      },
-      skillOffered: 'Node.js',
-      skillWanted: 'iOS Development',
-      message: 'Hi Emma! I\'m interested in learning iOS development and I can teach Node.js. Would you be interested in a skill swap?',
-      status: 'pending',
-      createdAt: '1 day ago',
-      proposedSchedule: 'Weekends, flexible timing'
-    },
-    {
-      id: 5,
-      to: {
-        name: 'James Rodriguez',
-        username: 'jamesml',
-        avatar: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=150'
-      },
-      skillOffered: 'React',
-      skillWanted: 'Machine Learning',
-      message: 'Hello! I\'d like to learn machine learning and I can offer React expertise in exchange.',
-      status: 'declined',
-      createdAt: '5 days ago',
-      proposedSchedule: 'Evenings, 2 hours per session'
-    },
-    {
-      id: 6,
-      to: {
-        name: 'Lisa Park',
-        username: 'lisadev',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150'
-      },
-      skillOffered: 'TypeScript',
-      skillWanted: 'DevOps',
-      message: 'Hi Lisa! I\'m looking to learn DevOps practices and I can help with TypeScript development.',
-      status: 'accepted',
-      createdAt: '1 week ago',
-      proposedSchedule: 'Flexible, prefer video calls'
-    }
-  ];
+    fetchRequests();
+  }, []);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -126,8 +69,13 @@ const Requests = () => {
 
   const handleRequestAction = (id, action) => {
     console.log(`${action} request ${id}`);
-    // In a real app, this would update the request status
+    // TODO: call accept/decline API
   };
+
+  if (loading) return <p>Loading...</p>;
+
+  const requestsToShow =
+    activeTab === 'received' ? receivedRequests : sentRequests;
 
   return (
     <motion.div
@@ -145,7 +93,7 @@ const Requests = () => {
         </p>
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tabs */}
       <Card>
         <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
           <button
@@ -173,202 +121,137 @@ const Requests = () => {
 
       {/* Requests List */}
       <div className="space-y-4">
-        {activeTab === 'received' && receivedRequests.map((request, index) => (
-          <motion.div
-            key={request.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card>
-              <div className="space-y-4">
-                {/* Request Header */}
-                <div className="flex items-start justify-between">
+        {requestsToShow.map((request, index) => {
+          const user =
+            activeTab === 'received' ? request.sender : request.receiver;
+
+          const skillLabel =
+            activeTab === 'received'
+              ? ['They offer', 'They want to learn']
+              : ['You offer', 'You want to learn'];
+
+          return (
+            <motion.div
+              key={request._id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Card>
+                <div className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <img
-                      src={request.from.avatar}
-                      alt={request.from.name}
+                      src={user?.profile_photo || '/default-avatar.png'}
+                      alt={user?.username}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
-                        {request.from.name}
+                        {user?.username}
                       </h3>
-                      <p className="text-sm text-gray-600">@{request.from.username}</p>
+                      <p className="text-sm text-gray-600">@{user?.username}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {getStatusIcon(request.status)}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            request.status
+                          )}`}
+                        >
+                          {request.status.charAt(0).toUpperCase() +
+                            request.status.slice(1)}
                         </span>
-                        <span className="text-sm text-gray-500">{request.createdAt}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Skill Exchange */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-sm text-gray-500">They offer:</span>
-                      <div className="mt-1">
-                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                          {request.skillOffered}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500">They want to learn:</span>
-                      <div className="mt-1">
-                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-emerald-100 text-emerald-800">
-                          {request.skillWanted}
+                        <span className="text-sm text-gray-500">
+                          {new Date(request.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Message */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">Message:</span>
-                  </div>
-                  <p className="text-gray-600 pl-6">{request.message}</p>
-                </div>
-
-                {/* Proposed Schedule */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">Proposed Schedule:</span>
-                  </div>
-                  <p className="text-gray-600 pl-6">{request.proposedSchedule}</p>
-                </div>
-
-                {/* Actions */}
-                {request.status === 'pending' && (
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={() => handleRequestAction(request.id, 'accept')}
-                      size="sm"
-                    >
-                      Accept
-                    </Button>
-                    <Button
-                      onClick={() => handleRequestAction(request.id, 'decline')}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Decline
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Message
-                    </Button>
-                  </div>
-                )}
-                {request.status === 'accepted' && (
-                  <div className="flex gap-3 pt-2">
-                    <Button size="sm">
-                      Schedule Session
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Message
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </motion.div>
-        ))}
-
-        {activeTab === 'sent' && sentRequests.map((request, index) => (
-          <motion.div
-            key={request.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card>
-              <div className="space-y-4">
-                {/* Request Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <img
-                      src={request.to.avatar}
-                      alt={request.to.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {request.to.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">@{request.to.username}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {getStatusIcon(request.status)}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                  {/* Skills */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-sm text-gray-500">
+                          {skillLabel[0]}:
                         </span>
-                        <span className="text-sm text-gray-500">{request.createdAt}</span>
+                        <div className="mt-1">
+                          <span className="inline-block px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                            {request.skillOffered}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">
+                          {skillLabel[1]}:
+                        </span>
+                        <div className="mt-1">
+                          <span className="inline-block px-3 py-1 rounded-full text-sm bg-emerald-100 text-emerald-800">
+                            {request.skillWanted}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Skill Exchange */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-sm text-gray-500">You offer:</span>
-                      <div className="mt-1">
-                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                          {request.skillOffered}
-                        </span>
-                      </div>
+                  {/* Message */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <MessageSquare className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Message:
+                      </span>
                     </div>
-                    <div>
-                      <span className="text-sm text-gray-500">You want to learn:</span>
-                      <div className="mt-1">
-                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-emerald-100 text-emerald-800">
-                          {request.skillWanted}
-                        </span>
-                      </div>
+                    <p className="text-gray-600 pl-6">{request.message}</p>
+                  </div>
+
+                  {/* Schedule */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Proposed Schedule:
+                      </span>
                     </div>
+                    <p className="text-gray-600 pl-6">
+                      {request.proposedSchedule}
+                    </p>
                   </div>
-                </div>
 
-                {/* Message */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700">Your message:</span>
-                  </div>
-                  <p className="text-gray-600 pl-6">{request.message}</p>
+                  {/* Actions */}
+                  {activeTab === 'received' && request.status === 'pending' && (
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        onClick={() =>
+                          handleRequestAction(request._id, 'accept')
+                        }
+                        size="sm"
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          handleRequestAction(request._id, 'decline')
+                        }
+                        variant="outline"
+                        size="sm"
+                      >
+                        Decline
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <MessageSquare className="h-4 w-4 mr-1" />
+                        Message
+                      </Button>
+                    </div>
+                  )}
                 </div>
-
-                {/* Actions */}
-                {request.status === 'accepted' && (
-                  <div className="flex gap-3 pt-2">
-                    <Button size="sm">
-                      Schedule Session
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Message
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </motion.div>
-        ))}
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Empty State */}
-      {((activeTab === 'received' && receivedRequests.length === 0) ||
-        (activeTab === 'sent' && sentRequests.length === 0)) && (
+      {requestsToShow.length === 0 && (
         <Card>
           <div className="text-center py-12">
             <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -380,11 +263,7 @@ const Requests = () => {
                 ? "You haven't received any skill swap requests yet."
                 : "You haven't sent any skill swap requests yet."}
             </p>
-            {activeTab === 'sent' && (
-              <Button>
-                Browse Developers
-              </Button>
-            )}
+            {activeTab === 'sent' && <Button>Browse Developers</Button>}
           </div>
         </Card>
       )}
