@@ -5,6 +5,7 @@ import { sendMail } from "../../utils/sendMail.js";
 import { generateOTP } from "../../utils/generateOtp.js"
 import { Otp } from "../../models/otp.model.js";
 import {SwapRequest} from "../../models/swap.model.js"
+import mongoose from "mongoose";
 
 const registerUser = asyncHandler(async (req, res) => {
     const {
@@ -350,9 +351,63 @@ const updateSwapStatus = asyncHandler(async (req, res) => {
     );
 });
 
-const getAllUser = asyncHandler(async(req,res)=>{
-    
-    const users = await User.find({});
+const getAllUser = asyncHandler(async (req, res) => {
+  const currentUserId = req.user._id
+  
+  
+  const users = await User.aggregate([
+    {
+      $match: { _id: { $ne: currentUserId } }, // exclude current user
+    },
+    {
+      $lookup: {
+        from: "swaprequests",
+        let: { receiverId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$sender", currentUserId] },
+                  { $eq: ["$receiver", "$$receiverId"] },
+                ],
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              receiverId: "$receiver",
+              status: 1,
+            },
+          },
+        ],
+        as: "userConnect",
+      },
+    },
+    {
+      $addFields: {
+        userConnect: { $arrayElemAt: ["$userConnect", 0] }, // convert array to single object or null
+      },
+    },
+    {
+      $project: {
+        password: 0, // optional: remove sensitive fields
+        __v: 0,
+      },
+    },
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Fetched users with connection info", {
+      success: true,
+      data: users,
+    })
+  );
+});
+
+const getAllUserNotLogin = asyncHandler(async(req,res)=>{
+ const users = await User.find({});
 
     return res.status(200)
     .json(
@@ -372,7 +427,8 @@ const deleteAlluser = asyncHandler(async(req,res)=>{
 
 export {registerUser,login,me , updateProfile , forgetPassword , verifyOtp , createSwapRequest , updateSwapStatus,
 getAllUser,
-deleteAlluser
+deleteAlluser,
+getAllUserNotLogin
 
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Home, 
@@ -7,13 +7,15 @@ import {
   Search, 
   MessageSquare, 
   LogOut,
-  Code2
+  Code2,
+  LogIn
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const Navigation = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
@@ -22,9 +24,8 @@ const Navigation = () => {
     { path: '/profile', icon: User, label: 'Profile' },
   ];
 
-  const handleLogout = () => {
-    logout();
-  };
+  const handleLogout = () => logout();
+  const handleLogin = () => navigate('/login');
 
   return (
     <>
@@ -55,13 +56,23 @@ const Navigation = () => {
               ))}
             </nav>
             <div className="px-2">
-              <button
-                onClick={handleLogout}
-                className="group flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
-              >
-                <LogOut className="mr-3 h-5 w-5" />
-                Logout
-              </button>
+              {!user || !user.data ? (
+                <button
+                  onClick={handleLogin}
+                  className="group flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                >
+                  <LogIn className="mr-3 h-5 w-5" />
+                  Login
+                </button>
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  className="group flex items-center w-full px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                >
+                  <LogOut className="mr-3 h-5 w-5" />
+                  Logout
+                </button>
+              )}
             </div>
           </div>
         </div>
